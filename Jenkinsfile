@@ -34,11 +34,13 @@ pipeline {
         stage('Job2: test') {
             steps {
                 sh """
-                    docker rm -f capstone1-test || true
-                    docker run -d --name capstone1-test -p 8081:80 ${IMAGE_NAME}:${BUILD_NUMBER}
+                    TEST_CONTAINER=capstone1-test-${BRANCH_NAME}-${BUILD_NUMBER}
+                    TEST_PORT=\$(( 8100 + (\${EXECUTOR_NUMBER:-0}) ))
+                    docker rm -f \$TEST_CONTAINER || true
+                    docker run -d --name \$TEST_CONTAINER -p \$TEST_PORT:80 ${IMAGE_NAME}:${BUILD_NUMBER}
                     sleep 5
-                    curl -sf http://localhost:8081/ -o /dev/null && echo 'Smoke test passed: site responds on 80'
-                    docker rm -f capstone1-test
+                    curl -sf http://localhost:\$TEST_PORT/ -o /dev/null && echo 'Smoke test passed: site responds on 80'
+                    docker rm -f \$TEST_CONTAINER
                 """
             }
         }
